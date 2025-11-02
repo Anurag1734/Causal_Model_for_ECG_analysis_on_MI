@@ -88,6 +88,7 @@ class VAETrainer:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
+        self.early_stopping_patience = early_stopping_patience
         self.early_stopping = EarlyStopping(patience=early_stopping_patience, verbose=True)
         
         # Cyclical β-annealing parameters
