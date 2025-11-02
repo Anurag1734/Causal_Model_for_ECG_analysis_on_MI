@@ -27,8 +27,8 @@ This project develops a deep learning pipeline to analyze 12-lead ECG signals fr
 Capstone/
 ├── README.md                          # This file
 ├── requirements.txt                   # Python dependencies
-├── requirements.yml                   # Conda environment
-├── install_vae_requirements.ps1       # Installation script
+├── setup_environment.ps1              # Environment setup script
+├── TRAINING_RESUME_GUIDE.md           # Guide for resuming interrupted training
 │
 ├── src/                               # Source code
 │   ├── models/
@@ -78,10 +78,7 @@ cd C:\Users\Acer\Desktop\Capstone\Capstone
 .\cuda_env\Scripts\activate
 
 # 3. Install required packages (if not already installed)
-.\install_vae_requirements.ps1
-
-# 4. Verify installation
-python scripts/preflight_vae_training.py
+.\setup_environment.ps1
 ```
 
 ### Current Training Status
