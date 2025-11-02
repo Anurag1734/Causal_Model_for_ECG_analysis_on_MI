@@ -1,0 +1,76 @@
+Subject: Request for Clinical Adjudication - ECG MI Detection Study (30 min)
+
+---
+
+Hi [Reviewer Name],
+
+I hope you're doing well! I'm working on my capstone project on ECG-based myocardial infarction detection using the MIMIC-IV dataset, and I would greatly appreciate your clinical expertise for a validation study.
+
+## What I Need
+
+I've developed an automated algorithm to identify acute MI cases from ECG timing and troponin data. To validate this approach, I need clinicians to independently review a sample of cases and confirm whether my algorithm's labels are clinically accurate.
+
+**Time Required**: ~30-45 minutes  
+**Number of Cases**: 100 cases  
+**Format**: Simple CSV file review (can use Excel/Google Sheets)
+
+## What You'll Do
+
+1. Review each case's clinical data (troponin values, admission type, ECG timing)
+2. Determine if each represents an **Acute MI** or **No Acute MI**
+3. Fill in your assessment in one column of the spreadsheet
+4. Optionally add brief notes for cases where you disagree with the algorithm
+
+## What I'm Providing
+
+- **adjudication_sample.csv**: The 100 cases to review (already attached)
+- **ADJUDICATION_INSTRUCTIONS.md**: Detailed protocol with decision tree and examples
+- **ADJUDICATION_QUICK_REFERENCE.md**: One-page cheat sheet for quick decisions
+
+All files are attached to this email.
+
+## Why This Matters
+
+Your assessment will serve as the "gold standard" to:
+- Calculate the algorithm's accuracy (positive predictive value, sensitivity, specificity)
+- Identify systematic errors in the automated approach
+- Strengthen the scientific validity of my study
+- Guide whether I need to refine my MI definition before proceeding
+
+**Target**: If we achieve ≥80% agreement, the algorithm is considered validated for my research.
+
+## Timeline
+
+**Ideal Return Date**: [Date - give them 5-7 days]  
+No pressure if you need more time - just let me know!
+
+## How to Return
+
+Simply:
+1. Open the CSV file
+2. Fill in the `clinician_label` column (MI_Acute, No_MI, or Uncertain)
+3. Save as `adjudication_sample_REVIEWED.csv`
+4. Reply to this email with the file attached
+
+## Questions?
+
+Feel free to reach out anytime:
+- Email: [Your Email]
+- Phone: [Your Phone]
+- WhatsApp: [Your WhatsApp]
+
+## Thank You! 🙏
+
+I really appreciate you taking the time to help with this. Your clinical judgment is invaluable for ensuring my research is scientifically sound and clinically meaningful. I'm happy to acknowledge your contribution in my final report if you'd like!
+
+If you have any questions about the data, the protocol, or specific cases, please don't hesitate to ask.
+
+Best regards,  
+[Your Name]
+
+---
+
+**Attachments**:
+- adjudication_sample.csv
+- ADJUDICATION_INSTRUCTIONS.md
+- ADJUDICATION_QUICK_REFERENCE.md

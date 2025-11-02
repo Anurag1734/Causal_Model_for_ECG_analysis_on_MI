@@ -1,0 +1,29 @@
+================================================================================
+POWER ANALYSIS REPORT
+================================================================================
+
+Decision: PROCEED
+
+Total MI_Acute_Presentation: 8,223
+Total Control_Symptomatic: 109,428
+
+Label Counts:
+primary_label
+Control_Asymptomatic     133235
+Control_Symptomatic      109428
+MI_Pre-Incident            8231
+MI_Acute_Presentation      8223
+Name: count, dtype: int64
+
+Subgroup Analysis:
+primary_label  Control_Symptomatic  MI_Acute_Presentation
+gender                                                   
+F                            52354                   3200
+M                            57074                   5023
+
+primary_label  Control_Symptomatic  MI_Acute_Presentation
+age_group                                                
+<50                          17588                   1034
+50-70                        45528                   3361
+>70                          46312                   3828
+

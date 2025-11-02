@@ -1,0 +1,27 @@
+# CUDA-enabled Python environment requirements
+# Generated for Capstone Project
+
+# Core PyTorch with CUDA support
+torch>=2.5.0
+torchvision>=0.20.0
+torchaudio>=2.5.0
+
+# Data Science and ML libraries
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Database and data processing
+duckdb>=1.0.0
+
+# Jupyter ecosystem
+jupyter>=1.0.0
+notebook>=7.0.0
+ipykernel>=6.0.0
+ipywidgets>=8.0.0
+
+# Additional utilities
+requests>=2.31.0
+pyyaml>=6.0.0
