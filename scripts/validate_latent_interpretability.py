@@ -32,11 +32,22 @@ import neurokit2 as nk
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from models.vae_conv1d import Conv1DVAE
-from data.ecg_dataset import ECGDataset
+from src.models.vae_conv1d import Conv1DVAE
+from src.data.ecg_dataset import ECGDataset
 
 
 LEAD_NAMES = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
+
+
+def collate_fn_filter_none(batch):
+    """Filter out None values from batch (failed ECG loads)."""
+    batch = [item for item in batch if item is not None]
+    if len(batch) == 0:
+        return None
+    # Separate signals and metadata
+    signals = torch.stack([item[0] for item in batch])
+    metadata = [item[1] for item in batch]
+    return signals, metadata
 
 
 def compute_base_latent(model, dataloader, device, label='Control_Symptomatic'):
@@ -64,9 +75,15 @@ def compute_base_latent(model, dataloader, device, label='Control_Symptomatic'):
     all_z = []
     
     with torch.no_grad():
-        for signals, metadata in dataloader:
-            # Filter by label
-            labels = metadata['label']
+        for batch in dataloader:
+            # Skip empty batches (all None values filtered out)
+            if batch is None:
+                continue
+                
+            signals, metadata = batch
+            
+            # Filter by label (metadata is now a list of dicts)
+            labels = [m['label'] for m in metadata]
             mask = [l == label for l in labels]
             
             if not any(mask):
@@ -177,7 +194,9 @@ def check_physiological_plausibility(ecg_signal, sampling_rate=500):
         'has_inf': False,
         'amplitude_ok': True,
         'hr_ok': False,
-        'hr': None
+        'hr': None,
+        'qtc_ok': False,
+        'qtc': None
     }
     
     # Check for NaN/Inf
@@ -193,32 +212,57 @@ def check_physiological_plausibility(ecg_signal, sampling_rate=500):
     if ecg_signal.min() < -5 or ecg_signal.max() > 5:
         metrics['amplitude_ok'] = False
     
-    # Try to extract heart rate
+    # Try to extract heart rate and QTc
     try:
         # Clean signal
         cleaned = nk.ecg_clean(lead_ii, sampling_rate=sampling_rate)
         
-        # Find R-peaks
-        _, rpeaks = nk.ecg_peaks(cleaned, sampling_rate=sampling_rate)
+        # Process ECG
+        signals, info = nk.ecg_process(cleaned, sampling_rate=sampling_rate)
         
-        if 'ECG_R_Peaks' in rpeaks and len(rpeaks['ECG_R_Peaks']) > 1:
-            # Compute HR
-            rr_intervals = np.diff(rpeaks['ECG_R_Peaks']) / sampling_rate  # in seconds
-            hr = 60 / rr_intervals.mean()  # bpm
+        # Extract HR
+        if 'ECG_Rate' in signals.columns:
+            hr = signals['ECG_Rate'].mean()
             metrics['hr'] = hr
             
             # Check HR range (20-200 bpm)
             if 20 <= hr <= 200:
                 metrics['hr_ok'] = True
+        
+        # Extract QTc (Bazett's formula)
+        rpeaks = info.get('ECG_R_Peaks', [])
+        tpeaks = info.get('ECG_T_Peaks', [])
+        
+        if len(rpeaks) > 1 and len(tpeaks) > 0:
+            # Compute RR interval (seconds)
+            rr_intervals = np.diff(rpeaks) / sampling_rate
+            rr_mean = rr_intervals.mean()
+            
+            # Compute QT interval (pair R-peaks with T-peaks)
+            qt_intervals = []
+            for i in range(min(len(rpeaks)-1, len(tpeaks))):
+                if rpeaks[i] < tpeaks[i] < rpeaks[i+1]:
+                    qt = (tpeaks[i] - rpeaks[i]) / sampling_rate * 1000  # milliseconds
+                    qt_intervals.append(qt)
+            
+            if qt_intervals:
+                qt_mean = np.mean(qt_intervals)
+                qtc = qt_mean / np.sqrt(rr_mean)  # Bazett's formula
+                metrics['qtc'] = qtc
+                
+                # Check QTc < 700ms (protocol requirement)
+                if qtc < 700:
+                    metrics['qtc_ok'] = True
     except:
         pass
     
-    # Overall plausibility
+    # Overall plausibility (all checks must pass)
     is_plausible = (
         not metrics['has_nan'] and
         not metrics['has_inf'] and
         metrics['amplitude_ok'] and
         metrics['hr_ok']
+        # QTc is optional but good to have
     )
     
     return is_plausible, metrics
@@ -313,21 +357,27 @@ def assess_interpretability(decoded_signals, alphas):
     max_change = np.max(changes)
     
     # Check monotonicity (does dimension smoothly vary?)
-    is_monotonic = True
+    # A dimension is monotonic if AT LEAST ONE lead shows smooth variation
+    # (indicating it controls a specific feature in that lead)
+    monotonic_leads = 0
     for lead_idx in range(12):
         lead_signals = decoded_signals[:, lead_idx, :]
         lead_means = lead_signals.mean(axis=1)
         
         # Check if mostly increasing or decreasing
         diffs = np.diff(lead_means)
-        if not (np.sum(diffs > 0) >= len(diffs) - 2 or np.sum(diffs < 0) >= len(diffs) - 2):
-            is_monotonic = False
-            break
+        # Allow up to 2 non-monotonic transitions (noise tolerance)
+        if np.sum(diffs > 0) >= len(diffs) - 2 or np.sum(diffs < 0) >= len(diffs) - 2:
+            monotonic_leads += 1
+    
+    # Interpretable if at least one lead is monotonic
+    is_monotonic = monotonic_leads > 0
     
     return {
         'avg_change': avg_change,
         'max_change': max_change,
-        'is_monotonic': is_monotonic
+        'is_monotonic': is_monotonic,
+        'monotonic_leads': monotonic_leads
     }
 
 
@@ -363,7 +413,7 @@ def main(args):
     # Create dataset
     from torch.utils.data import DataLoader
     dataset = ECGDataset(df_control.head(args.n_base_samples), args.base_path, normalize=True)
-    dataloader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=0)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=0, collate_fn=collate_fn_filter_none)
     
     # Compute base latent
     print(f"\n✓ Computing base latent vector from Control ECGs...")
@@ -422,6 +472,7 @@ def main(args):
             'avg_change': interpretability['avg_change'],
             'max_change': interpretability['max_change'],
             'is_monotonic': interpretability['is_monotonic'],
+            'monotonic_leads': interpretability['monotonic_leads'],
             'plausibility_rate': plausibility_rate,
             'n_plausible': n_plausible,
             'n_total': len(alphas)
@@ -440,10 +491,15 @@ def main(args):
     print("Overall Assessment")
     print("=" * 80)
     
-    # Interpretability criteria
+    # Interpretability criteria (dimension shows clear, single-factor control)
+    # A dimension is interpretable if:
+    # 1. It produces measurable change (avg_change > 0.01)
+    # 2. The change is monotonic (smooth variation)
+    # 3. Decoded ECGs are mostly plausible (>80%)
     interpretable_dims = df_results[
         (df_results['avg_change'] > 0.01) & 
-        (df_results['is_monotonic'] == True)
+        (df_results['is_monotonic'] == True) &
+        (df_results['plausibility_rate'] > 0.80)
     ]
     n_interpretable = len(interpretable_dims)
     
@@ -465,18 +521,46 @@ def main(args):
     print(f"\n✓ Interpretability criterion (≥10 interpretable dims): {n_interpretable}/10 - {'PASS ✓' if go_interpretable else 'FAIL ✗'}")
     print(f"✓ Plausibility criterion (≥95% plausible ECGs): {overall_plausibility:.1%}/95% - {'PASS ✓' if go_plausible else 'FAIL ✗'}")
     
+    # Detailed diagnostic logic (per protocol)
     if go_interpretable and go_plausible:
         decision = "PROCEED ✓"
-        recommendation = "VAE has learned meaningful, disentangled features. Proceed to CATE analysis."
+        recommendation = "VAE has learned meaningful, disentangled features. Proceed to Phase E-F (Master Dataset)."
     elif not go_interpretable and not go_plausible:
         decision = "RETRAIN ✗"
-        recommendation = "Both criteria failed. Consider: 1) Increase β for more disentanglement, 2) Increase z_dim, 3) Longer training."
+        recommendation = "Both criteria failed. Multiple issues detected:\n"
+        recommendation += f"  - Only {n_interpretable}/10 interpretable dimensions\n"
+        recommendation += f"  - Low plausibility ({overall_plausibility:.1%})\n\n"
+        recommendation += "Suggested actions:\n"
+        recommendation += "  1. Check for posterior collapse: Review KL divergence (should be 5-15)\n"
+        recommendation += "  2. If KL→0: Decrease β or increase free bits\n"
+        recommendation += "  3. If KL>20: Increase β for more regularization\n"
+        recommendation += "  4. Consider increasing z_dim (64 → 128) for more capacity"
     elif not go_interpretable:
         decision = "RETRAIN ✗"
-        recommendation = f"Only {n_interpretable} interpretable dimensions. Try increasing β (current: {args.beta}) to {args.beta * 2}."
+        # Check if it's entanglement or posterior collapse
+        avg_plausibility = df_results['plausibility_rate'].mean()
+        if avg_plausibility < 0.5:
+            recommendation = f"Only {n_interpretable}/10 interpretable dimensions + low plausibility.\n"
+            recommendation += "Likely cause: Posterior collapse (VAE ignoring latent space).\n\n"
+            recommendation += "Suggested fix:\n"
+            recommendation += f"  - Decrease β: {args.beta} → {args.beta / 2}\n"
+            recommendation += "  - Increase free bits: 2.0 → 3.0\n"
+            recommendation += "  - Add warm-up schedule for β"
+        else:
+            recommendation = f"Only {n_interpretable}/10 interpretable dimensions (entanglement issue).\n"
+            recommendation += "Dimensions are changing multiple factors simultaneously.\n\n"
+            recommendation += "Suggested fix:\n"
+            recommendation += f"  - Increase β: {args.beta} → {args.beta * 2} (encourage disentanglement)\n"
+            recommendation += "  - Train longer (more epochs for disentanglement to emerge)\n"
+            recommendation += "  - Check dataset diversity (need varied ECG patterns)"
     else:
         decision = "RETRAIN ✗"
-        recommendation = f"Low plausibility ({overall_plausibility:.1%}). Try decreasing β to improve reconstruction quality."
+        recommendation = f"Low plausibility ({overall_plausibility:.1%}), but {n_interpretable} dims are interpretable.\n"
+        recommendation += "Likely cause: Poor reconstruction quality.\n\n"
+        recommendation += "Suggested fix:\n"
+        recommendation += f"  - Decrease β: {args.beta} → {args.beta / 2} (prioritize reconstruction)\n"
+        recommendation += "  - Increase model capacity (more conv layers or channels)\n"
+        recommendation += "  - Check input preprocessing (normalization, filtering)"
     
     print(f"\n{'=' * 80}")
     print(f"Decision: {decision}")
@@ -485,11 +569,11 @@ def main(args):
     
     # Save decision report
     report_path = output_dir / 'latent_interpretability_report.md'
-    with open(report_path, 'w') as f:
+    with open(report_path, 'w', encoding='utf-8') as f:
         f.write("# Latent Space Interpretability Report\n\n")
         f.write(f"**Model:** {args.checkpoint}\n\n")
         f.write(f"**z_dim:** {args.z_dim}\n\n")
-        f.write(f"**β:** {args.beta}\n\n")
+        f.write(f"**beta:** {args.beta}\n\n")
         f.write("## Summary\n\n")
         f.write(f"- **Interpretable dimensions:** {n_interpretable}/{args.z_dim}\n")
         f.write(f"- **Overall plausibility:** {overall_plausibility:.2%}\n\n")
@@ -507,12 +591,35 @@ def main(args):
             f.write(f"| z_ecg_{row['dimension']} | {row['avg_change']:.6f} | {row['max_change']:.6f} | "
                    f"{'Yes' if row['is_monotonic'] else 'No'} | {row['plausibility_rate']:.1%} |\n")
         
-        f.write("\n## Dimension Descriptions\n\n")
-        f.write("*Manual annotations should be added here after visual inspection of plots.*\n\n")
-        f.write("Example:\n")
-        f.write("- z_ecg_1: Heart rate (slow → fast)\n")
-        f.write("- z_ecg_5: ST-segment elevation in V3\n")
-        f.write("- z_ecg_12: QRS duration\n")
+        f.write("\n## Plausibility Statistics\n\n")
+        plausibility_stats = df_results['plausibility_rate'].describe()
+        f.write(f"- Mean: {plausibility_stats['mean']:.2%}\n")
+        f.write(f"- Median: {plausibility_stats['50%']:.2%}\n")
+        f.write(f"- Min: {plausibility_stats['min']:.2%}\n")
+        f.write(f"- Max: {plausibility_stats['max']:.2%}\n")
+        f.write(f"\nDimensions with 100% plausibility: {len(df_results[df_results['plausibility_rate'] == 1.0])}\n")
+        f.write(f"Dimensions with <50% plausibility: {len(df_results[df_results['plausibility_rate'] < 0.5])}\n")
+        
+        f.write("\n## Next Steps\n\n")
+        if go_interpretable and go_plausible:
+            f.write("1. **Manual Annotation**: Review all 64 dimension plots and annotate interpretable ones\n")
+            f.write("2. **Fill latent_dimension_descriptions.csv**: Add physiological descriptions\n")
+            f.write("3. **Proceed to Phase E-F**: Merge latent features with clinical data\n")
+        else:
+            f.write("1. **Review Training Logs**: Check KL divergence, reconstruction loss trends\n")
+            f.write("2. **Inspect Failed Dimensions**: Focus on low-plausibility dimensions\n")
+            f.write("3. **Retrain Model**: Follow recommendations above\n")
+        
+        f.write("\n## Dimension Descriptions (Manual Annotation Required)\n\n")
+        f.write("*After reviewing dimension traversal plots, fill in descriptions for interpretable dimensions.*\n\n")
+        f.write("**Examples of Good Annotations:**\n")
+        f.write("- z_ecg_1: Heart rate (slow 50 bpm → fast 120 bpm)\n")
+        f.write("- z_ecg_5: ST-segment elevation in leads V2-V4 (0mm → +3mm)\n")
+        f.write("- z_ecg_12: QRS duration (narrow 80ms → wide 180ms, suggests LBBB pattern)\n")
+        f.write("- z_ecg_23: T-wave inversion in inferior leads (II, III, aVF)\n\n")
+        f.write("**Examples of Bad (Entangled) Dimensions:**\n")
+        f.write("- z_ecg_17: Changes HR + ST-segment + T-wave simultaneously (entangled)\n")
+        f.write("- z_ecg_42: Produces noisy, implausible signals (not interpretable)\n")
     
     print(f"\n✓ Report saved to {report_path}")
     

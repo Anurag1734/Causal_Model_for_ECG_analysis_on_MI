@@ -1,0 +1,19 @@
+{
+  "checkpoint_path": "models/checkpoints/vae_zdim64_beta4.0_20251102_073456/best_model.pt",
+  "checkpoint_epoch": 53,
+  "checkpoint_val_loss": 32722.57400173611,
+  "test_beta": 1.0,
+  "test_results": {
+    "test_loss": 32964.09941819727,
+    "test_recon_loss": 32504.040662613104,
+    "test_kl_loss": 115.01470485472771,
+    "test_kl_raw": 242.97343070735536,
+    "n_samples": 4393,
+    "n_batches": 18
+  },
+  "model_config": {
+    "z_dim": 64,
+    "beta": 4.0,
+    "total_parameters": 82448332
+  }
+}

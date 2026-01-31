@@ -1,0 +1,61 @@
+\contentsline {chapter}{Certificate}{1}{chapter*.1}%
+\contentsline {chapter}{Acknowledgement}{2}{chapter*.2}%
+\contentsline {chapter}{Abstract}{3}{chapter*.3}%
+\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Background}{2}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Motivation}{2}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Problem Statement}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Scope of This Report}{3}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Organization of Report}{3}{section.1.5}%
+\contentsline {chapter}{\numberline {2}Problem Definition}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Clinical Context}{4}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Technical Problem Formulation}{4}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Causal Inference Framework}{4}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}ECG Representation Learning}{5}{subsection.2.2.2}%
+\contentsline {section}{\numberline {2.3}Key Challenges}{5}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Challenge 1: Class Imbalance}{5}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Challenge 2: Confounding Variables}{5}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.3.3}Challenge 3: Feature Interpretability}{5}{subsection.2.3.3}%
+\contentsline {subsection}{\numberline {2.3.4}Challenge 4: Causal Assumption Verification}{5}{subsection.2.3.4}%
+\contentsline {section}{\numberline {2.4}Proposed Solution Architecture}{6}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Literature Survey}{7}{chapter.3}%
+\contentsline {section}{\numberline {3.1}ECG-Based MI Detection and Benchmarking}{7}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Paper 1: Clinical Trial for Deep Learning MI Detection [1]}{7}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Paper 2: Foundational Theory of Structural Causal Models [2]}{7}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Paper 3: PTB-XL Benchmark Dataset for ECG Analysis [3]}{8}{subsection.3.1.3}%
+\contentsline {section}{\numberline {3.2}Causal Inference in Healthcare}{8}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Paper 4: Causal Forests for Heterogeneous Treatment Effects [4]}{8}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Paper 5: Matching and Propensity Scores [5]}{8}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Paper 6: Double Machine Learning for Causal Parameters [6]}{8}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Paper 7: Expert Knowledge in Causal DAGs [7]}{9}{subsection.3.2.4}%
+\contentsline {section}{\numberline {3.3}Representation Learning with VAEs}{9}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Paper 8: Causal VAE for Treatment Effects [8]}{9}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Paper 9: $\beta $-VAE for Disentangled Learning [9]}{9}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Paper 10: VAE for Medical Time Series [10]}{9}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Paper 11: Interpretability of VAE Latent Space [11]}{10}{subsection.3.3.4}%
+\contentsline {section}{\numberline {3.4}Validation and Robustness}{10}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Paper 12: Sensitivity Analysis with E-Values [12]}{10}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Paper 13: Negative Controls for Confounding Detection [13]}{10}{subsection.3.4.2}%
+\contentsline {section}{\numberline {3.5}ECG Counterfactuals and Synthesis}{10}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Paper 14: ECG Counterfactual Explanations [14]}{10}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Paper 15: Generative Models for Realistic 12-Lead ECG Synthesis [15]}{11}{subsection.3.5.2}%
+\contentsline {section}{\numberline {3.6}Summary of Literature}{11}{section.3.6}%
+\contentsline {chapter}{\numberline {4}Research/Technology Gaps and Challenges}{12}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Identified Gaps}{12}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Gap 1: Absence of Causal ECG Analysis}{12}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Gap 2: Lack of Disentangled ECG Representations}{12}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Gap 3: Integration of Representation Learning with Causal Inference}{12}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Gap 4: Dataset-Specific Challenges in MIMIC-IV}{12}{subsection.4.1.4}%
+\contentsline {section}{\numberline {4.2}Technical Challenges}{13}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Challenge 1: High-Dimensional ECG Signals}{13}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Challenge 2: Disentanglement Validation}{13}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Challenge 3: Confounding Bias in Observational Data}{13}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Challenge 4: Computational Requirements}{13}{subsection.4.2.4}%
+\contentsline {section}{\numberline {4.3}Novelty of Proposed Approach}{13}{section.4.3}%
+\contentsline {chapter}{\numberline {5}Data Exploration}{15}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Dataset Description}{15}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}MIMIC-IV Database}{15}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Cohort Definition}{15}{subsection.5.1.2}%
+\contentsline {subsubsection}{Inclusion Criteria}{15}{subsection.5.1.2}%
+\contentsline {subsubsection}{Exclusion Criteria}{15}{Item.14}%
+\contentsline {subsubsection}{MI Adjudication}{16}{Item.18}%

@@ -28,6 +28,9 @@ ENV/
 env/
 .venv
 
+# AI Agent / MCP Server
+AI AGENT/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

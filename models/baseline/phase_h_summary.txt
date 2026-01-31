@@ -1,0 +1,35 @@
+
+Phase H Summary
+===============
+
+Models Trained:
+1. XGBoost (Tabular): 16 features
+   - Test AUC-ROC: 0.7018
+   - Best hyperparameters optimized via 5-fold grouped CV
+
+2. MLP (VAE Latent): 80 features
+   - Test AUC-ROC: 0.6606
+   - Early stopping at epoch with best validation AUC
+
+3. CNN (Raw Waveform): Skipped (time-intensive, requires full waveform loading)
+
+Data Split (Grouped by subject_id):
+- Train: 33510 records (15817 subjects)
+- Val:   7371 records (3390 subjects)
+- Test:  6971 records (3390 subjects)
+
+Best Model: XGBoost
+  - Test AUC-ROC: 0.7018
+
+Artifacts Saved:
+- models/baseline/xgboost_model.pkl
+- models/baseline/mlp_model_best.pt
+- models/baseline/model_evaluation_metrics.csv
+- models/baseline/subgroup_analysis.csv
+- models/baseline/split_assignments.parquet
+- models/baseline/plots/*.png
+
+Next Steps:
+- Review baseline_models_report.md
+- Use best model predictions as benchmark for causal models
+- Proceed to Phase I: Propensity Score Modeling

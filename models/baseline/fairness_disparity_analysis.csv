@@ -1,0 +1,5 @@
+Model,Subgroup,Max Difference,Bias Detected
+XGBoost,Age Group,0.04551723560987542,False
+XGBoost,Diabetes Status,0.026134707751251374,False
+MLP,Age Group,0.05667408931947093,False
+MLP,Diabetes Status,0.015460558328729945,False
